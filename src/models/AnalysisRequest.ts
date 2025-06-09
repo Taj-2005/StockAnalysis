@@ -6,6 +6,7 @@ export interface IAnalysisRequest {
   stockSymbol: string;
   status: 'pending' | 'completed';
   result?: string;
+  timestamp?: Date;
 }
 
 export interface IAnalysisRequestDocument extends IAnalysisRequest, Document {}
@@ -15,7 +16,7 @@ const AnalysisRequestSchema = new Schema<IAnalysisRequestDocument>({
   investorId: { type: Schema.Types.ObjectId, ref: 'StocksUser', required: true }, // Make sure ref is 'StocksUser'
   stockSymbol: { type: String, required: true },
   status: { type: String, enum: ['pending', 'completed'], required: true },
-  result: { type: String },
+  result: { type: String }, timestamp: { type : String, required:true }
 });
 
 export const AnalysisRequest: Model<IAnalysisRequestDocument> =

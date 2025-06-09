@@ -16,7 +16,10 @@ export async function GET(req: Request) {
   const investorId = decoded.userId;
 
   const results = await AnalysisRequest.find({ investorId, status: 'completed' })
-    .populate('analystId', 'email')
+    .populate({
+    path: 'analystId',
+    select: 'email',
+    model: 'StocksUser',})
     .sort({ createdAt: -1 });
 
   return NextResponse.json({ results });
