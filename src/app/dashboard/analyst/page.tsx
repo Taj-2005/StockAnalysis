@@ -6,6 +6,7 @@ import { LogOut } from 'lucide-react';
 import { signOut } from 'next-auth/react';
 import AssignInvestors from '@/app/components/AssignInvestors';
 import AssignedInvestors from '@/app/components/AssignedInvestors';
+import AnalysisRequests from '@/app/components/AnalysisRequests';
 
 interface DecodedToken {
   userId: string;
@@ -52,6 +53,7 @@ export default function AnalystDashboard() {
       </div>
       <div className="p-6">
         <h1 className="text-2xl text-white mb-4">📊 Analyst Dashboard</h1>
+        <AnalysisRequests />
         <AssignInvestors analystId={userId} />
         <AssignedInvestors analystId={userId} />
       </div>

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { LogOut } from 'lucide-react';
 import { signOut } from 'next-auth/react';
 import toast from 'react-hot-toast';
+import CompletedAnalysisList from '@/app/components/CompletedAnalysis';
 interface Stock {
   symbol: string;
   name: string;
@@ -52,18 +53,33 @@ export default function InvestorDashboard() {
 }, []);
 
   const requestAnalysis = async (symbol: string) => {
+    const token = document.cookie
+      .split('; ')
+      .find(row => row.startsWith('token='))
+      ?.split('=')[1];
+
+    if (!token) {
+      alert('Unauthorized');
+      return;
+    }
+
     const res = await fetch('/api/analysis/request', {
       method: 'POST',
-      body: JSON.stringify({ symbol }),
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ stockSymbol: symbol }),
     });
 
     const data = await res.json();
     if (res.ok) {
-      setMessage(`Request sent for ${symbol}`);
+      toast.success(`Request sent for ${symbol}`);
     } else {
-      setMessage(data.error || 'Error requesting analysis');
+      toast.error(data.error || 'Error requesting analysis');
     }
   };
+
 
   return (
     <>
@@ -131,6 +147,7 @@ export default function InvestorDashboard() {
             ))}
           </tbody>
         </table>
+        <CompletedAnalysisList />
       </main>
     </>
   );

@@ -9,15 +9,15 @@ export async function GET(req: Request) {
   const token = req.headers.get('authorization')?.split(' ')[1];
   const decoded = verifyJWT(token || '');
 
-  if (!decoded || typeof decoded !== 'object' || decoded.role !== 'analyst') {
+  if (!decoded || typeof decoded !== 'object' || decoded.role !== 'investor') {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const analystId = decoded.userId;
+  const investorId = decoded.userId;
 
-  const requests = await AnalysisRequest.find({ analystId, status: 'pending' })
-    .populate('investorId', 'email')
+  const results = await AnalysisRequest.find({ investorId, status: 'completed' })
+    .populate('analystId', 'email')
     .sort({ createdAt: -1 });
 
-  return NextResponse.json({ requests });
+  return NextResponse.json({ results });
 }
