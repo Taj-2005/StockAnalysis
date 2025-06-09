@@ -2,11 +2,22 @@ import { NextResponse } from 'next/server';
 
 export async function GET(req: Request, { params }: { params: { symbol: string } }) {
   const symbol = params.symbol.toUpperCase();
+  const url = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${symbol}&apikey=${process.env.ALPHA_VANTAGE_API_KEY}`;
+  
+  const res = await fetch(url);
+  const data = await res.json();
 
-  const mockPrices = Array.from({ length: 30 }, (_, i) => ({
-    date: new Date(Date.now() - i * 24 * 3600 * 1000).toISOString(),
-    price: 100 + Math.sin(i / 5) * 10 + Math.random() * 5,
-  })).reverse();
+  if (!data['Time Series (Daily)']) {
+    return NextResponse.json({ error: 'Invalid stock symbol or API limit' }, { status: 400 });
+  }
 
-  return NextResponse.json({ symbol, prices: mockPrices });
+  const prices = Object.entries(data['Time Series (Daily)'])
+    .slice(0, 30)
+    .map(([date, value]: any) => ({
+      date,
+      price: parseFloat(value['4. close']),
+    }))
+    .reverse();
+
+  return NextResponse.json({ symbol, prices });
 }

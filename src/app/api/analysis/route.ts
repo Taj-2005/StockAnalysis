@@ -1,36 +1,21 @@
-import { NextResponse } from 'next/server';
-import { Report } from '@/models/Report';
-import {dbConnect} from '@/lib/mongodb';
+import OpenAI from 'openai';
 
-// This is a dummy example — replace with your actual OpenAI GPT-4 API integration
-async function getGPTRecommendation(stockSymbol: string, priceHistory: any[]) {
-  // Simulate call to GPT-4 for Buy/Sell recommendation and portfolio %
-  const recommendation = Math.random() > 0.5 ? 'Buy' : 'Sell';
-  const portfolioPercent = +(Math.random() * 20).toFixed(2);
-  return { recommendation, portfolioPercent };
-}
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-export async function POST(req: Request) {
-  const { analystId, investorId, stockSymbol, priceHistory } = await req.json();
+async function getGPTRecommendation(symbol: string, priceHistory: any[]) {
+  const prompt = `Analyze the last 30 days of prices for ${symbol}:\n${JSON.stringify(priceHistory)}\n
+  Recommend: Should the investor buy/sell/hold? What % of portfolio should be allocated for max profit?`;
 
-  if (!analystId || !investorId || !stockSymbol || !priceHistory) {
-    return NextResponse.json({ error: 'Missing data' }, { status: 400 });
-  }
-
-  await dbConnect();
-
-  const { recommendation, portfolioPercent } = await getGPTRecommendation(stockSymbol, priceHistory);
-
-  const report = new Report({
-    analyst: analystId,
-    investor: investorId,
-    stockSymbol,
-    priceHistory,
-    recommendation,
-    portfolioPercent,
+  const response = await openai.chat.completions.create({
+    model: "gpt-4",
+    messages: [{ role: "user", content: prompt }],
   });
 
-  await report.save();
+  const result = response.choices[0].message.content;
+  const [recommendation, percent] = (result?.split('\n') || []);
 
-  return NextResponse.json({ report });
+  return {
+    recommendation: recommendation?.split(':')[1]?.trim() || 'Hold',
+    portfolioPercent: parseFloat(percent?.split(':')[1] || '0'),
+  };
 }
