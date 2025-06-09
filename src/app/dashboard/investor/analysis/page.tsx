@@ -20,6 +20,11 @@ export default function InvestorAnalysisPage() {
 
   return (
     <main className="max-w-4xl mx-auto p-6">
+        {reports.length === 0 ? (
+            <p className="text-gray-500">You have no analysis reports yet. Request analysis from your dashboard.</p>
+            ) : (
+            <table className="...">...</table>
+            )}
       <h1 className="text-2xl font-bold mb-4">Your Analysis Reports</h1>
 
       <table className="w-full table-auto border">

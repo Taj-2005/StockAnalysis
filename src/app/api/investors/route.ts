@@ -1,20 +1,28 @@
 import { NextResponse } from 'next/server';
 import { dbConnect } from '@/lib/mongodb';
 import { User } from '@/models/User';
-import { cookies } from 'next/headers';
-import { verifyJWT } from '@/lib/auth';
 
-export async function GET() {
-  await dbConnect();
+export async function POST(req: Request) {
+  try {
+    await dbConnect();
 
-  const token = (await cookies()).get('token')?.value;
-  const decoded = verifyJWT(token || '');
+    const { ids } = await req.json();
 
-  if (!decoded || typeof decoded !== 'object' || decoded.role !== 'analyst') {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return NextResponse.json(
+        { error: 'Invalid or empty ids array' },
+        { status: 400 }
+      );
+    }
+
+    const investors = await User.find({ _id: { $in: ids } });
+
+    return NextResponse.json({ investors });
+  } catch (error) {
+    console.error('Error fetching investors details:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch investors' },
+      { status: 500 }
+    );
   }
-
-  const analyst = await User.findById(decoded.userId).populate('assignedInvestors');
-
-  return NextResponse.json({ investors: analyst.assignedInvestors });
 }

@@ -21,6 +21,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Stock symbol required' }, { status: 400 });
   }
 
+  // Fetch assigned analyst ID from user document (you can also pass analystId from frontend if you want)
   const user = await User.findById(investorId);
 
   if (!user?.assignedAnalyst) {

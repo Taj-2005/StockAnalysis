@@ -1,17 +1,25 @@
-import mongoose, { Schema, model, models } from 'mongoose';
+import mongoose, { Schema, model, models, Model, Document } from 'mongoose';
+
+import { Types } from 'mongoose';
 
 export interface IUser {
   email: string;
   password: string;
   role: 'investor' | 'analyst';
-  assignedInvestors?: mongoose.Types.ObjectId[]; // For analysts
+  assignedInvestors?: Types.ObjectId[];
+  assignedAnalyst?: Types.ObjectId | IUserDocument | null;
 }
 
-const UserSchema = new Schema<IUser>({
+export interface IUserDocument extends IUser, mongoose.Document {}
+
+
+const UserSchema = new Schema<IUserDocument>({
   email: { type: String, unique: true, required: true },
   password: { type: String, required: true },
   role: { type: String, enum: ['investor', 'analyst'], required: true },
   assignedInvestors: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+  assignedAnalyst: { type: Schema.Types.ObjectId, ref: 'User' },
 });
 
-export const User = models.StocksUser || model<IUser>('StocksUser', UserSchema);
+export const User: Model<IUserDocument> =
+  models.StocksUser || model<IUserDocument>('StocksUser', UserSchema);

@@ -5,6 +5,7 @@ import { dbConnect } from '@/lib/mongodb';
 import { Watchlist } from '@/models/Watchlist';
 
 export async function POST(req: Request) {
+    const WatchlistModel: any = Watchlist;
   await dbConnect();
 
   const token = (await cookies()).get('token')?.value;
@@ -14,7 +15,7 @@ export async function POST(req: Request) {
   }
 
   const { symbol } = await req.json();
-  await Watchlist.updateOne(
+  await WatchlistModel.updateOne(
     { user: decoded.userId },
     { $addToSet: { symbols: symbol } },
     { upsert: true }

@@ -1,60 +1,60 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { signOut } from 'next-auth/react';
+import {jwtDecode} from 'jwt-decode';
 import { LogOut } from 'lucide-react';
-import { Line } from 'react-chartjs-2';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-} from 'chart.js';
+import { signOut } from 'next-auth/react';
+import AssignInvestors from '@/app/components/AssignInvestors';
+import AssignedInvestors from '@/app/components/AssignedInvestors';
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
+interface DecodedToken {
+  userId: string;
+  email?: string;
+  role?: string;
+  exp?: number;
+}
 
 export default function AnalystDashboard() {
-  const [priceData, setPriceData] = useState<{ date: string; price: number }[]>([]);
+  const [userId, setUserId] = useState('');
 
   useEffect(() => {
-    // Fetch stock price history for a symbol (e.g., AAPL)
-    fetch('/api/stock/AAPL')
-      .then(res => res.json())
-      .then(data => setPriceData(data.prices));
+    try {
+      const token = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('token='))
+        ?.split('=')[1];
+      console.log('Token from cookie:', token);
+
+      if (token) {
+        const decoded = jwtDecode<DecodedToken>(token);
+        console.log('Decoded token:', decoded);
+
+        if (decoded?.userId) {  // <-- change here
+          setUserId(decoded.userId);
+        }
+      }
+    } catch (error) {
+      console.error('Invalid token:', error);
+    }
   }, []);
 
-  const data = {
-    labels: priceData.map(p => new Date(p.date).toLocaleDateString()),
-    datasets: [
-      {
-        label: 'AAPL Price',
-        data: priceData.map(p => p.price),
-        borderColor: 'rgb(37, 99, 235)',
-        backgroundColor: 'rgba(37, 99, 235, 0.5)',
-      },
-    ],
-  };
+  if (!userId) return <p className="text-white">Loading dashboard...</p>;
 
   return (
     <>
-    <div className='flex flex-row min-w-screen justify-end items-end px-10 py-5'>
-      <button onClick={() => signOut()} className='p-2 flex flex-row justify-center items-center gap-2 bg-red-500 rounded-xl shadow-2xl border-white'>
-        <span>Logout</span>
+      <div className='min-w-screen flex flex-row justify-end items-end p-4'>
+        <button
+          onClick={() => signOut()}
+          className="flex items-center gap-2 md:px-4 md:py-2 px-2 py-1 bg-red-500 hover:bg-red-400 text-white font-medium rounded-md shadow transition-colors duration-200">
+            <span>Logout</span>
         <LogOut className="w-5 h-5" />
-      </button>
-    </div>
-    <main className="max-w-4xl mx-auto p-6">
-      <h1 className="text-3xl mb-6">Analyst Dashboard</h1>
-      <p>Analyze stock trends and generate recommendations.</p>
-      <div className="max-w-2xl">
-        <Line options={{ responsive: true, plugins: { legend: { position: 'top' } } }} data={data} />
+        </button>
       </div>
-      {/* Add UI to generate recommendations using GPT-4 */}
-    </main>
+      <div className="p-6">
+        <h1 className="text-2xl text-white mb-4">📊 Analyst Dashboard</h1>
+        <AssignInvestors analystId={userId} />
+        <AssignedInvestors analystId={userId} />
+      </div>
     </>
   );
 }
